@@ -37,7 +37,7 @@ class Window():
         self.add_button(color="red",text="Clear Cache",x=1170,y=435,\
                     binding=self.clear)
 
-        self.add_button(color="gray",text="open",x=1150,y=500,\
+        self.add_button(color="gray",text="open",x=1150,y=650,\
         binding= self.openfile)
 
         ## radio button variable        
@@ -74,7 +74,11 @@ class Window():
         
         self.add_radiobutton(x=x_button,y=375,text="rotate")
 
+        self.add_radiobutton(x=x_button-150,y=25,text="Shear")
+        self.add_radiobutton(x=x_button-150,y=50,text="apply brightness")
 
+        self.add_radiobutton(x=x_button-150,y=75,text="emboss")
+        self.add_radiobutton(x=x_button-150,y=100,text="outline")
 
         self.gray = None ### Caches
         self.left = None
@@ -83,11 +87,14 @@ class Window():
         self.bottom = None
         self.full_sobel = None
         self.noise = None
+        self.blur = None
 
         self.file=None
 
         self.add_text(x=x_button,y=460,width=18,height=1)
-       
+        self.add_text(x=x_button,y=480,width=18,height=1)
+        self.add_text(x=x_button,y=500,width=18,height=1)
+
 
     def start(self)-> None:
         """ Starts the window Loop """
@@ -143,7 +150,13 @@ class Window():
     def apply(self):
 
         if self.r_var.get()  == 0:
-            self.cimage = applykernel(self.cimage,"blur",(3,3))
+            if self.blur is None:
+                self.cimage = median_blur(self.cimage)
+                self.cimage = applykernel(self.cimage,"blur",(3,3))
+                self.cimage = avg_blur(self.cimage)
+                self.blur = self.cimage
+            else:
+                self.cimage = self.blur
             self.a2.imshow(self.cimage,cmap="gray")
             self.canvas.draw()   
 
@@ -223,7 +236,7 @@ class Window():
             self.canvas.draw() 
         elif self.r_var.get() == 9:
             self.cimage = applykernel(self.cimage,"sepia",(3,3))
-            self.a2.imshow(self.cimage,cmap="gray")
+            self.a2.imshow(self.cimage)
             self.canvas.draw() 
 
         elif self.r_var.get() == 10:
@@ -244,14 +257,16 @@ class Window():
 
                 n = self.cimage-self.cimage.min()
                 d = self.cimage.max()-self.cimage.min()
-                self.cimage = (n/d)*2
+                self.cimage = (n/d)*1.5
                 self.a2.imshow(self.cimage)
                 self.canvas.draw()
 
         elif self.r_var.get() == 12:
-            rgb_weights = [2, 1, 0.5]
+            text = self.text_widgets[1].get("1.0","end")
+            weights = text.split(",")
+            weights = [float(w) for w in weights]
             self.cimage = self.image.copy()
-            self.cimage = color_filter(self.cimage,rgb_weights)/255
+            self.cimage = color_filter(self.cimage,weights)/255
 
             self.a2.imshow(self.cimage,cmap="gray")
             self.canvas.draw()
@@ -272,6 +287,28 @@ class Window():
             self.a2.imshow(self.cimage,cmap="gray")
             self.canvas.draw()
 
+        elif self.r_var.get() == 15:
+            self.cimage = shear(self.cimage)
+            self.a2.imshow(self.cimage,cmap="gray")
+            self.canvas.draw()
+
+        elif self.r_var.get() == 16:
+            value = self.text_widgets[2].get("1.0","end")
+            self.cimage = self.cimage*float(value)
+            self.a2.imshow(self.cimage,cmap="gray")
+            self.canvas.draw()
+
+        elif self.r_var.get() == 17:
+            self.cimage = applykernel(self.cimage,"emboss",(3,3))
+            self.a2.imshow(self.cimage,cmap="gray")
+            self.canvas.draw()
+
+        elif self.r_var.get() == 18:
+            self.cimage = applykernel(self.cimage,"outline",(3,3))
+            self.a2.imshow(self.cimage,cmap="gray")
+            self.canvas.draw() 
+
+
             
            
 
@@ -279,6 +316,7 @@ class Window():
         self.cimage = self.image
         self.a2.imshow(self.cimage,cmap="gray")
         self.canvas.draw() 
+
     def clear(self):
         self.gray = None
         self.top = None
@@ -287,6 +325,7 @@ class Window():
         self.right = None
         self.full_sobel = None
         self.noise = None
+        self.blur = None
         self.cimage = self.image
 
 
